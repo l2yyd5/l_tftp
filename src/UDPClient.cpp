@@ -68,16 +68,16 @@ sockaddr_in Socket::GetMyAddress() {
 UDPClient::UDPClient(std::string ip, int port) {
   _sock_desc = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   bool socket_fail = _sock_desc == -1;
-  // if (socket_fail) throw SocketException("[UDPServer::UDPServer()] Can't create socket");
 
   remoteAddrInfo.sin_family = AF_INET;
   remoteAddrInfo.sin_port = htons(port);
   remoteAddrInfo.sin_addr.s_addr = inet_addr(ip.c_str());
 
   struct timeval timeout;
-  timeout.tv_sec = 10;
+  timeout.tv_sec = 2;
   timeout.tv_usec = 0;
   ::setsockopt(_sock_desc, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
+  timeout.tv_sec = 2;
   ::setsockopt(_sock_desc, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout));
 }
 

@@ -22,11 +22,10 @@ using namespace std;
 extern int optind, opterr, optopt;
 extern char *optargi;
 
-static struct option long_options[] =
-    {
-        {"help", no_argument, nullptr, 'h'},
-        {"port", required_argument, nullptr, 'p'},
-        {"addr", required_argument, nullptr, 'a'}};
+static struct option long_options[] = {
+    {"help", no_argument, nullptr, 'h'},
+    {"port", required_argument, nullptr, 'p'},
+    {"addr", required_argument, nullptr, 'a'}};
 
 const string WHITE_SPACE = " \t\r\n";
 
@@ -57,26 +56,20 @@ const string helpinfo(
     "\t\tquit \n");
 
 void panic(string hint, bool exit_ = false, int exit_code = 0) {
-  if (SHOW_PANIC)
-    cerr << "[!ExpShell panic]: " << hint << endl;
-  if (exit_)
-    exit(exit_code);
+  if (SHOW_PANIC) cerr << "[!ExpShell panic]: " << hint << endl;
+  if (exit_) exit(exit_code);
 }
 
-bool is_white_space(char ch) {
-  return WHITE_SPACE.find(ch) != -1;
-}
+bool is_white_space(char ch) { return WHITE_SPACE.find(ch) != -1; }
 
 vector<string> string_split(const string &s, const string &delims) {
   vector<string> vec;
   int p = 0, q;
   while ((q = s.find_first_of(delims, p)) != string::npos) {
-    if (q > p)
-      vec.push_back(s.substr(p, q - p));
+    if (q > p) vec.push_back(s.substr(p, q - p));
     p = q + 1;
   }
-  if (p < s.length())
-    vec.push_back(s.substr(p));
+  if (p < s.length()) vec.push_back(s.substr(p));
   return vec;
 }
 
@@ -91,13 +84,10 @@ string string_split_first(const string &s, const string &delims) {
 }
 
 string trim(const string &s) {
-  if (s.length() == 0)
-    return string(s);
+  if (s.length() == 0) return string(s);
   int p = 0, q = s.length() - 1;
-  while (is_white_space(s[p]))
-    p++;
-  while (is_white_space(s[q]))
-    q--;
+  while (is_white_space(s[p])) p++;
+  while (is_white_space(s[q])) q--;
   return s.substr(p, q - p + 1);
 }
 
@@ -124,15 +114,15 @@ void show_command_prompt() {
   gethostname(char_buf, CHAR_BUF_SIZE);
   string hostname(char_buf);
   hostname = string_split_first(hostname, ".");
-  cout << "[" << username << "@" << hostname << " " << cwd << " tftp_client ]> ";
+  cout << "[" << username << "@" << hostname << " " << cwd
+       << " tftp_client ]> ";
 }
 
 void check_wait_status(int &wait_status) {
   if (WIFEXITED(wait_status) == 0) {
     char buf[8];
     sprintf(buf, "%d", WEXITSTATUS(wait_status));
-    if (SHOW_WAIT_PANIC)
-      panic("child exit with code " + string(buf));
+    if (SHOW_WAIT_PANIC) panic("child exit with code " + string(buf));
   }
 }
 
@@ -142,8 +132,7 @@ int process_builtin_command(string line) {
     return 1;
   } else if (line.substr(0, 2) == "cd") {
     string arg1 = string_split(line, WHITE_SPACE)[1];
-    if (arg1.find("~") == 0)
-      line = "cd " + home_dir + arg1.substr(1);
+    if (arg1.find("~") == 0) line = "cd " + home_dir + arg1.substr(1);
     int chdir_ret = chdir(trim(line.substr(2)).c_str());
     if (chdir_ret < 0) {
       panic("chdir failed");
@@ -188,8 +177,7 @@ int process_builtin_command(string line) {
 
 int main(int argc, char *argv[]) {
   if (argc < 2) {
-    cout << "Missing remote address\n"
-         << endl;
+    cout << "Missing remote address\n" << endl;
     exit(0);
   }
   system("clear");
@@ -228,8 +216,7 @@ int main(int argc, char *argv[]) {
     show_command_prompt();
     line = trim(read_line());
     cmd_history.push_back(line);
-    if (process_builtin_command(line) > 0)
-      continue;
+    if (process_builtin_command(line) > 0) continue;
 
     vector<string> args = string_split(line, WHITE_SPACE);
     transform(args[0].begin(), args[0].end(), args[0].begin(),

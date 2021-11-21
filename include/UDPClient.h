@@ -30,7 +30,7 @@ class Socket {
 
 class UDPSocket : public Socket {};
 
-class UDPClient : public Socket {
+class UDPClient : public UDPSocket {
  public:
   UDPClient() {}
   UDPClient(std::string ip, int port);

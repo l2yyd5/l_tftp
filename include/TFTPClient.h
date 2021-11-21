@@ -64,8 +64,8 @@ class TFTPClient : public UDPClient {
   Result sendRequest(const std::string &fileName, OperationCode code);
   Result sendAck();
   Result read();
-  Result getFile(std::fstream &file);
-  Result putFile(std::fstream &file);
+  Result getFile(std::fstream &file, const ptime& startime, double& loseper);
+  Result putFile(std::fstream &file, const ptime& startime, double& loseper);
 
   std::fstream logfile;
   UDPClient m_socket;
