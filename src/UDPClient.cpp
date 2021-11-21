@@ -8,12 +8,6 @@ Socket::~Socket() {
   close(_sock_desc);
 }
 
-int Socket::Send(const void *buffer, size_t size) {
-  int status = sendto(_sock_desc, buffer, size, 0, (sockaddr *)&remoteAddrInfo, sizeof(remoteAddrInfo));
-  // if (status == -1) throw SocketException("[Socket::Send()] sendto() failed");
-  return status;
-}
-
 int Socket::SendTo(const char *buffer, size_t size, const char *host, uint16_t port) {
   struct sockaddr_in remoteAddr;
   remoteAddr.sin_family = AF_INET;
@@ -21,18 +15,7 @@ int Socket::SendTo(const char *buffer, size_t size, const char *host, uint16_t p
   remoteAddr.sin_port = htons(port);
   ::memset(remoteAddr.sin_zero, '\0', sizeof(remoteAddr.sin_zero));
   int status = sendto(_sock_desc, buffer, size, 0, (sockaddr *)&remoteAddr, sizeof(remoteAddr));
-  // if (status == -1) throw SocketException("[Socket::Send()] sendto() failed");
   return status;
-}
-
-int Socket::Recv(void *buffer, size_t size) {
-  int addr_len = sizeof(sockaddr_in);
-  ::memset(&remoteAddrInfo, '\0', sizeof(remoteAddrInfo));
-  int received = recvfrom(_sock_desc, buffer, size, 0, (sockaddr *)&remoteAddrInfo, (socklen_t *)&addr_len);
-  bool recv_failed = received == -1;
-  bool no_messages = received == 0;
-  // if (recv_failed || no_messages) throw SocketException("[Socket::Recv()] recvfrom() failed");
-  return received;
 }
 
 int Socket::RecvFrom(void *buffer, size_t size, char *host, uint16_t *port) {
@@ -41,7 +24,6 @@ int Socket::RecvFrom(void *buffer, size_t size, char *host, uint16_t *port) {
   int received = recvfrom(_sock_desc, buffer, size, 0, (sockaddr *)&remoteAddrInfo, (socklen_t *)&addr_len);
   bool recv_failed = received == -1;
   bool no_messages = received == 0;
-  // if (recv_failed || no_messages) throw SocketException("[Socket::Recv()] recvfrom() failed");
   if (received > 0) {
     if (host != nullptr) {
       ::strcpy(host, inet_ntoa(remoteAddrInfo.sin_addr));
@@ -59,10 +41,6 @@ int Socket::GetDescriptor() {
 
 sockaddr_in Socket::GetDestinationAddress() {
   return remoteAddrInfo;
-}
-
-sockaddr_in Socket::GetMyAddress() {
-  return _my_addr;
 }
 
 UDPClient::UDPClient(std::string ip, int port) {

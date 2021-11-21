@@ -1,18 +1,14 @@
 #ifndef __TFTPClient_H__
 #define __TFTPClient_H__
 
+#include <UDPClient.h>
+
 #include <array>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/format.hpp>
-#include <cstring>
-#include <ctime>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <string>
-
-#include "UDPClient.h"
 
 using boost::format;
 using namespace boost::posix_time;
@@ -64,8 +60,8 @@ class TFTPClient : public UDPClient {
   Result sendRequest(const std::string &fileName, OperationCode code);
   Result sendAck();
   Result read();
-  Result getFile(std::fstream &file, const ptime& startime, double& loseper);
-  Result putFile(std::fstream &file, const ptime& startime, double& loseper);
+  Result getFile(std::fstream &file, const ptime &startime, double &loseper);
+  Result putFile(std::fstream &file, const ptime &startime, double &loseper);
 
   std::fstream logfile;
   UDPClient m_socket;
@@ -75,7 +71,6 @@ class TFTPClient : public UDPClient {
   uint16_t m_remotePort;
   Buffer m_buffer;
   uint16_t m_receivedBlock;
-  status m_status;
 };
 
 #endif

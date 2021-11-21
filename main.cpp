@@ -45,6 +45,7 @@ vector<string> cmd_history;
 const string helpinfo(
     "\tUsage:\n"
     "\t\tls \n"
+    "\t\tpwd \n"
     "\t\tcd [~|dir] \n"
     "\t\tmode [mode(default octet)] \n"
     "\t\tput filename\n"
@@ -100,21 +101,7 @@ string read_line() {
 void show_command_prompt() {
   passwd *pwd = getpwuid(getuid());
   string username(pwd->pw_name);
-  getcwd(char_buf, CHAR_BUF_SIZE);
-  string cwd(char_buf);
-  if (username == "root")
-    home_dir = "/root";
-  else
-    home_dir = "/home/" + username;
-  if (cwd == home_dir)
-    cwd = "~";
-  else if (cwd != "/") {
-    cwd = string_split_last(cwd, "/");
-  }
-  gethostname(char_buf, CHAR_BUF_SIZE);
-  string hostname(char_buf);
-  hostname = string_split_first(hostname, ".");
-  cout << "[" << username << "@" << hostname << " " << cwd
+  cout << "[" << username
        << " tftp_client ]> ";
 }
 
@@ -143,6 +130,11 @@ int process_builtin_command(string line) {
 
   if (line == "ls") {
     system("ls");
+    return 1;
+  }
+
+  if (line == "pwd") {
+    system("pwd");
     return 1;
   }
 
@@ -177,7 +169,8 @@ int process_builtin_command(string line) {
 
 int main(int argc, char *argv[]) {
   if (argc < 2) {
-    cout << "Missing remote address\n" << endl;
+    cout << "Missing remote address\n"
+         << endl;
     exit(0);
   }
   system("clear");
