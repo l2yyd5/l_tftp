@@ -157,8 +157,8 @@ TFTPClient::Result TFTPClient::getFile(std::fstream &file,
       recvt++;
     } else if (m_receivedBlock == totalRecvBlocks) {
       loset++;
+      recvt++;
       result = this->sendAck();
-      recvt += 2;
       if (result.first != status::Success) {
         losetimes = 1;
         while (losetimes++ < 3) {
@@ -167,8 +167,8 @@ TFTPClient::Result TFTPClient::getFile(std::fstream &file,
             break;
           }
         }
-        recvt += (losetimes - 1);
-        loset += (losetimes - 1);
+        recvt += losetimes;
+        loset += losetimes;
         if (losetimes == 3) {
           return std::make_pair(result.first, totalRecvNums);
         }
@@ -195,8 +195,8 @@ TFTPClient::Result TFTPClient::putFile(std::fstream &file,
   Result result;
   uint16_t currentBlock = 0;
   unsigned int totalSendNums = 0;
-  std::array<char, 4> backs;
-  int losetimes = 0;
+  Buffer backs;
+  int losetimes = 0, loses = 0;
   int recvt = 0, loset = 0;
   while (true) {
     if (currentBlock == m_receivedBlock) {
@@ -204,7 +204,7 @@ TFTPClient::Result TFTPClient::putFile(std::fstream &file,
         loseper = (100.0 * loset) / (1.0 * recvt);
         return std::make_pair(status::Success, totalSendNums);
       }
-      losetimes = 0;
+      loses = 0;
       ++currentBlock;
       m_buffer[0] = 0;
       m_buffer[1] = static_cast<char>(OperationCode::DATA);
@@ -214,13 +214,14 @@ TFTPClient::Result TFTPClient::putFile(std::fstream &file,
       if (file.bad()) {
         return std::make_pair(status::ReadFileError, totalSendNums);
       }
-      memcpy(&backs[0], &m_buffer[0], m_headerSize);
+      memcpy(&backs[0], &m_buffer[0], m_headerSize + m_dataSize);
     } else {
-      losetimes++, loset++;
-      if (losetimes == 3) {
+      loses++;
+      loset++;
+      if (loses == 3) {
         return std::make_pair(result.first, totalSendNums);
       }
-      memcpy(&m_buffer[0], &backs[0], m_headerSize);
+      memcpy(&m_buffer[0], &backs[0], m_headerSize + m_dataSize);
     }
     const auto packetSize = m_headerSize + file.gcount();
     const auto sendNums = m_socket.SendTo(
@@ -263,7 +264,7 @@ TFTPClient::Result TFTPClient::putFile(std::fstream &file,
 }
 
 TFTPClient::status TFTPClient::get(const std::string &fileName) {
-  double loseper = 0;
+  double loset = 0;
   std::fstream file;
   if (m_mode == "netascii") {
     file.open(fileName.c_str(), std::ios_base::out);
@@ -285,7 +286,7 @@ TFTPClient::status TFTPClient::get(const std::string &fileName) {
   }
 
   m_receivedBlock = 0;
-  result = this->getFile(file, startTime, loseper);
+  result = this->getFile(file, startTime, loset);
   if (result.first == status::Success) {
     ptime now = microsec_clock::local_time();
     time_duration dur = now - startTime;
@@ -293,8 +294,9 @@ TFTPClient::status TFTPClient::get(const std::string &fileName) {
     double kbs = 1000000.0 * result.second;
     kbs /= (nanoseconds * 1.0);
     std::string successMessage =
-        (format("\n%d bytes received! Speed %.2lf kb/s.\nGet file %s successfully! (%%%.1lf lose)\n") %
-         result.second % kbs % fileName.c_str() % loseper)
+        (format("\n%d bytes received! Speed %.2lf kb/s.\nGet file "
+                "successfully! (%%%.1lf lose)\n") %
+         result.second % kbs % loset)
             .str();
     this->writeLog(successMessage);
     std::cout << successMessage;
@@ -304,7 +306,7 @@ TFTPClient::status TFTPClient::get(const std::string &fileName) {
 }
 
 TFTPClient::status TFTPClient::put(const std::string &fileName) {
-  double loseper = 0;
+  double loset = 0;
   std::fstream file;
   if (m_mode == "netascii") {
     file.open(fileName.c_str(), std::ios_base::in);
@@ -332,7 +334,7 @@ TFTPClient::status TFTPClient::put(const std::string &fileName) {
     return result.first;
   }
 
-  result = this->putFile(file, startTime, loseper);
+  result = this->putFile(file, startTime, loset);
   if (result.first == status::Success) {
     ptime now = microsec_clock::local_time();
     time_duration dur = now - startTime;
@@ -340,9 +342,9 @@ TFTPClient::status TFTPClient::put(const std::string &fileName) {
     double kbs = 1000000.0 * result.second;
     kbs /= (nanoseconds * 1.0);
     std::string successMessage =
-        (format("\n%d bytes sent! Speed %.2lf kb/s.\nPut file %s successfully! "
+        (format("\n%d bytes sent! Speed %.2lf kb/s.\nPut file successfully! "
                 "(%%%.1lf lose)\n") %
-         result.second % kbs % fileName.c_str() % loseper)
+         result.second % kbs % loset)
             .str();
     this->writeLog(successMessage);
     std::cout << successMessage;
